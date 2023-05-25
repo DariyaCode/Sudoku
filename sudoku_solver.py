@@ -7,9 +7,8 @@ def solve_sudoku(puzzle):
 
     row, col = empty_cell
 
-    numbers = list(range(1, 10))  # Числа от 1 до 9
-
-    random.shuffle(numbers)  # Перемешиваем числа в случайном порядке
+    numbers = list(range(1, 10))
+    random.shuffle(numbers)  # Перемешиваем числа от 1 до 9
 
     for num in numbers:
         if is_valid_move(puzzle, row, col, num):
