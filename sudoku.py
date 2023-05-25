@@ -1,136 +1,110 @@
-import time
-import random
+import tkinter as tk
+from tkinter import messagebox
+from sudoku_solver import solve_sudoku, generate_sudoku
 
-# Global variables
-EMPTY = 0
-GRID_SIZE = 9
-BOX_SIZE = 3
+class SudokuGame:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Sudoku")
+        self.timer_running = False
+        self.timer_count = 0
+        self.best_time = {'Easy': float('inf'), 'Medium': float('inf'), 'Hard': float('inf')}
+        self.current_difficulty = 'Easy'
 
-# Function to print the Sudoku grid
-def print_grid(grid):
-    for i in range(GRID_SIZE):
-        if i % BOX_SIZE == 0 and i != 0:
-            print("- - - - - - - - - - - -")
+        # Создание сетки Sudoku
+        self.cells = []
+        for i in range(9):
+            row = []
+            for j in range(9):
+                cell = tk.Entry(root, width=3, font=('Arial', 16, 'bold'), justify='center')
+                cell.grid(row=i, column=j)
+                row.append(cell)
+            self.cells.append(row)
 
-        for j in range(GRID_SIZE):
-            if j % BOX_SIZE == 0 and j != 0:
-                print("| ", end="")
-            print(grid[i][j], end=" ")
-        print()
+        # Кнопки
+        solve_button = tk.Button(root, text='Показать решение', command=self.solve)
+        solve_button.grid(row=9, column=0, columnspan=9)
 
-# Function to check if the given number is valid in the given position
-def is_valid(grid, row, col, num):
-    # Check if the number already exists in the row
-    for i in range(GRID_SIZE):
-        if grid[row][i] == num:
-            return False
+        difficulty_label = tk.Label(root, text='Уровень сложности:')
+        difficulty_label.grid(row=10, column=0, columnspan=3)
+        difficulty_var = tk.StringVar(root)
+        difficulty_var.set('Easy')
+        difficulty_menu = tk.OptionMenu(root, difficulty_var, 'Easy', 'Medium', 'Hard', command=self.change_difficulty)
+        difficulty_menu.grid(row=10, column=3, columnspan=3)
 
-    # Check if the number already exists in the column
-    for i in range(GRID_SIZE):
-        if grid[i][col] == num:
-            return False
+        timer_label = tk.Label(root, text='Время:')
+        timer_label.grid(row=11, column=0, columnspan=3)
+        self.timer_var = tk.StringVar(root)
+        self.timer_var.set('00:00')
+        timer_value = tk.Label(root, textvariable=self.timer_var)
+        timer_value.grid(row=11, column=3, columnspan=3)
 
-    # Check if the number already exists in the box
-    box_row = (row // BOX_SIZE) * BOX_SIZE
-    box_col = (col // BOX_SIZE) * BOX_SIZE
-    for i in range(BOX_SIZE):
-        for j in range(BOX_SIZE):
-            if grid[box_row + i][box_col + j] == num:
-                return False
+        best_time_button = tk.Button(root, text='Лучшее время', command=self.show_best_time)
+        best_time_button.grid(row=12, column=0, columnspan=9)
 
-    return True
+        # Запуск таймера
+        self.start_timer()
 
-# Function to solve the Sudoku puzzle using backtracking
-def solve_sudoku(grid):
-    for row in range(GRID_SIZE):
-        for col in range(GRID_SIZE):
-            if grid[row][col] == EMPTY:
-                for num in range(1, 10):
-                    if is_valid(grid, row, col, num):
-                        grid[row][col] = num
+        # Генерация новой игры
+        self.new_game()
 
-                        if solve_sudoku(grid):
-                            return True
+    def new_game(self):
+        # Сброс значений ячеек
+        for i in range(9):
+            for j in range(9):
+                self.cells[i][j].delete(0, tk.END)
+                self.cells[i][j].config(state='normal')
 
-                        grid[row][col] = EMPTY
+        # Генерация новой судоку
+        sudoku = generate_sudoku()
+        for i in range(9):
+            for j in range(9):
+                if sudoku[i][j] != 0:
+                    self.cells[i][j].insert(0, str(sudoku[i][j]))
+                    self.cells[i][j].config(state='disabled')
 
-                return False
+    def solve(self):
+        # Получение значений ячеек
+        puzzle = [[0] * 9 for _ in range(9)]
+        for i in range(9):
+            for j in range(9):
+                value = self.cells[i][j].get()
+                if value.isdigit():
+                    puzzle[i][j] = int(value)
+                else:
+                    puzzle[i][j] = 0
 
-    return True
+        # Решение судоку
+        solved_puzzle = solve_sudoku(puzzle)
 
-# Function to generate a Sudoku puzzle of a given difficulty level
-def generate_puzzle(difficulty):
-    grid = [[EMPTY] * GRID_SIZE for _ in range(GRID_SIZE)]
-    solve_sudoku(grid)
-
-    # Remove random cells to create the puzzle
-    num_cells = GRID_SIZE * GRID_SIZE
-    num_empty_cells = int(num_cells * difficulty / 100)
-    empty_cells = random.sample(range(num_cells), num_empty_cells)
-
-    for cell in empty_cells:
-        row = cell // GRID_SIZE
-        col = cell % GRID_SIZE
-        grid[row][col] = EMPTY
-
-    return grid
-
-# Function to play the Sudoku game
-def play_sudoku(difficulty):
-    grid = generate_puzzle(difficulty)
-    start_time = time.time()
-
-    print_grid(grid)
-
-    while True:
-        row = int(input("Enter the row (1-9): ")) - 1
-        col = int(input("Enter the column (1-9): ")) - 1
-        num = int(input("Enter the number (1-9): "))
-
-        # Input validation
-        if not (1 <= row <= GRID_SIZE and 1 <= col <= GRID_SIZE and 1 <= num <= GRID_SIZE):
-            print("Invalid input! Please enter values within the range 1-9.")
-            continue
-
-        if is_valid(grid, row, col, num):
-            grid[row][col] = num
+        # Отображение решения
+        if solved_puzzle:
+            for i in range(9):
+                for j in range(9):
+                    self.cells[i][j].delete(0, tk.END)
+                    self.cells[i][j].insert(0, str(solved_puzzle[i][j]))
         else:
-            print("Invalid move! Please try again.")
-            continue
+            messagebox.showinfo("Ошибка", "Невозможно решить судоку!")
 
-        print_grid(grid)
+    def start_timer(self):
+        self.timer_count += 1
+        minutes = self.timer_count // 60
+        seconds = self.timer_count % 60
+        self.timer_var.set(f'{minutes:02d}:{seconds:02d}')
+        if self.timer_running:
+            self.root.after(1000, self.start_timer)
 
-        if solve_sudoku(grid):
-            print("Congratulations! You solved the puzzle.")
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            print("Elapsed Time: {:.2f} seconds".format(elapsed_time))
-            break
+    def change_difficulty(self, difficulty):
+        self.current_difficulty = difficulty
 
-# Main program
-def main():
-    print("Welcome to Sudoku!")
+    def show_best_time(self):
+        messagebox.showinfo("Лучшее время", f"Лучшее время для {self.current_difficulty} уровня сложности: {self.best_time[self.current_difficulty]}")
 
-    while True:
-        print("\nSelect the difficulty level:")
-        print("1. Easy")
-        print("2. Medium")
-        print("3. Hard")
-        print("4. Exit")
+    def save_best_time(self):
+        current_time = self.timer_count
+        if current_time < self.best_time[self.current_difficulty]:
+            self.best_time[self.current_difficulty] = current_time
 
-        choice = int(input("Enter your choice (1-4): "))
-
-        if choice == 1:
-            play_sudoku(40)  # Easy difficulty: 40% filled cells
-        elif choice == 2:
-            play_sudoku(30)  # Medium difficulty: 30% filled cells
-        elif choice == 3:
-            play_sudoku(20)  # Hard difficulty: 20% filled cells
-        elif choice == 4:
-            print("Thank you for playing Sudoku!")
-            break
-        else:
-            print("Invalid choice! Please try again.")
-
-if __name__ == "__main__":
-    main()
+root = tk.Tk()
+game = SudokuGame(root)
+root.mainloop()
