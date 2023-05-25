@@ -48,20 +48,23 @@ class SudokuGame:
         # Генерация новой игры
         self.new_game()
 
-    def new_game(self):
-        # Сброс значений ячеек
-        for i in range(9):
-            for j in range(9):
-                self.cells[i][j].delete(0, tk.END)
-                self.cells[i][j].config(state='normal')
+def new_game(self):
+    # Сброс значений ячеек
+    for i in range(9):
+        for j in range(9):
+            self.cells[i][j].delete(0, tk.END)
+            self.cells[i][j].config(state='normal')
 
-        # Генерация новой судоку
-        sudoku = generate_sudoku()
-        for i in range(9):
-            for j in range(9):
-                if sudoku[i][j] != 0:
-                    self.cells[i][j].insert(0, str(sudoku[i][j]))
-                    self.cells[i][j].config(state='disabled')
+    # Сброс таймера
+    self.timer_count = 0
+
+    # Генерация новой судоку
+    sudoku = generate_sudoku()
+    for i in range(9):
+        for j in range(9):
+            if sudoku[i][j] != 0:
+                self.cells[i][j].insert(0, str(sudoku[i][j]))
+                self.cells[i][j].config(state='disabled')
 
     def solve(self):
         # Получение значений ячеек
