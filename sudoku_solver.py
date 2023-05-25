@@ -7,7 +7,11 @@ def solve_sudoku(puzzle):
 
     row, col = empty_cell
 
-    for num in range(1, 10):
+    numbers = list(range(1, 10))  # Числа от 1 до 9
+
+    random.shuffle(numbers)  # Перемешиваем числа в случайном порядке
+
+    for num in numbers:
         if is_valid_move(puzzle, row, col, num):
             puzzle[row][col] = num
 
@@ -17,6 +21,7 @@ def solve_sudoku(puzzle):
             puzzle[row][col] = 0
 
     return None
+
 
 def is_valid_move(puzzle, row, col, num):
     # Проверка в строке
@@ -46,15 +51,26 @@ def find_empty_cell(puzzle):
                 return (i, j)
     return None
 
-def generate_sudoku():
+def generate_sudoku(difficulty):
     puzzle = [[0] * 9 for _ in range(9)]
     solve_sudoku(puzzle)
-    remove_cells(puzzle)
+    remove_cells(puzzle, difficulty)
     return puzzle
 
-def remove_cells(puzzle):
-    empty_cells = random.sample(range(81), 45)  # Удаление 45 ячеек
+def remove_cells(puzzle, difficulty):
+    num_empty_cells = get_num_empty_cells(difficulty)
+    empty_cells = random.sample(range(81), num_empty_cells)  # Удаление нужного количества ячеек
     for cell in empty_cells:
         row = cell // 9
         col = cell % 9
         puzzle[row][col] = 0
+
+def get_num_empty_cells(difficulty):
+    if difficulty == 'Easy':
+        return random.randint(35, 45)
+    elif difficulty == 'Medium':
+        return random.randint(46, 55)
+    elif difficulty == 'Hard':
+        return random.randint(56, 64)
+    else:
+        raise ValueError("Invalid difficulty level")

@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
-from sudoku_solver import solve_sudoku, generate_sudoku
+import random
+import sudoku_solver  # Импорт модуля sudoku_solver
+from sudoku_solver import solve_sudoku  # Импорт модуля sudoku_solver
 
 class SudokuGame:
     def __init__(self, root):
@@ -27,9 +29,9 @@ class SudokuGame:
 
         difficulty_label = tk.Label(root, text='Уровень сложности:')
         difficulty_label.grid(row=10, column=0, columnspan=3)
-        difficulty_var = tk.StringVar(root)
-        difficulty_var.set('Easy')
-        difficulty_menu = tk.OptionMenu(root, difficulty_var, 'Easy', 'Medium', 'Hard', command=self.change_difficulty)
+        self.difficulty_var = tk.StringVar(root)
+        self.difficulty_var.set('Easy')
+        difficulty_menu = tk.OptionMenu(root, self.difficulty_var, 'Easy', 'Medium', 'Hard', command=self.change_difficulty)
         difficulty_menu.grid(row=10, column=3, columnspan=3)
 
         timer_label = tk.Label(root, text='Время:')
@@ -42,13 +44,16 @@ class SudokuGame:
         best_time_button = tk.Button(root, text='Лучшее время', command=self.show_best_time)
         best_time_button.grid(row=12, column=0, columnspan=9)
 
+        new_game_button = tk.Button(root, text='Новая игра', command=self.generate_new_game)
+        new_game_button.grid(row=13, column=0, columnspan=9)
+
         # Запуск таймера
         self.start_timer()
 
         # Генерация новой игры
-        self.new_game()
+        self.generate_new_game()
 
-    def new_game(self):
+    def generate_new_game(self):
         # Сброс значений ячеек
         for i in range(9):
             for j in range(9):
@@ -58,8 +63,11 @@ class SudokuGame:
         # Сброс таймера
         self.timer_count = 0
 
+        # Обновление текущего уровня сложности
+        self.current_difficulty = self.difficulty_var.get()
+
         # Генерация новой судоку
-        sudoku = generate_sudoku()
+        sudoku = sudoku_solver.generate_sudoku(difficulty=self.current_difficulty)
         for i in range(9):
             for j in range(9):
                 if sudoku[i][j] != 0:
@@ -94,11 +102,13 @@ class SudokuGame:
         minutes = self.timer_count // 60
         seconds = self.timer_count % 60
         self.timer_var.set(f'{minutes:02d}:{seconds:02d}')
-        if self.timer_running:
+        if not self.timer_running:
+            self.timer_running = True
             self.root.after(1000, self.start_timer)
 
     def change_difficulty(self, difficulty):
         self.current_difficulty = difficulty
+        self.generate_new_game()
 
     def show_best_time(self):
         messagebox.showinfo("Лучшее время", f"Лучшее время для {self.current_difficulty} уровня сложности: {self.best_time[self.current_difficulty]}")
